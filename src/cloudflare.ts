@@ -6,7 +6,8 @@ interface ApiResult<T> { success: boolean; result: T; errors?: { message: string
 export class Cloudflare {
   env: Env;
   fetcher: typeof fetch;
-  constructor(env: Env, fetcher: typeof fetch = fetch) { this.env = env; this.fetcher = fetcher; }
+  // Workers 原生 fetch 不能以 Cloudflare 实例作为 this 调用。
+  constructor(env: Env, fetcher: typeof fetch = (...args) => fetch(...args)) { this.env = env; this.fetcher = fetcher; }
   async request<T>(path: string, init: RequestInit = {}): Promise<ApiResult<T>> {
     if (!this.env.CF_API_TOKEN || !/^[a-f0-9]{32}$/i.test(this.env.CF_ACCOUNT_ID)) throw new HttpError(503, '请先配置 Cloudflare 账号 ID 和 API Token。');
     let response: Response;

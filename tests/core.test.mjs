@@ -253,6 +253,24 @@ test('同任务复用基础清单，新任务、过期和同步会重新读取�
   await assert.rejects(f.apply('maintenance', 'app.example.com', 'invalid'), /批量任务标识/);
 }));
 
+test('默认 API fetch 不使用 Cloudflare 实例作为调用上下文', async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async function (url, init) {
+    assert.ok(this === undefined || this === globalThis, '原生 fetch 不能接受客户端实例作为 this');
+    assert.equal(new URL(url).origin, 'https://api.cloudflare.com');
+    assert.equal(init.headers.Authorization, 'Bearer fixture-token');
+    calls++;
+    return new Response(JSON.stringify({ success: true, result: [], result_info: { total_pages: 1 } }));
+  };
+  try {
+    const api = new Cloudflare({ CF_ACCOUNT_ID: 'b'.repeat(32), CF_API_TOKEN: 'fixture-token' });
+    assert.deepEqual(await api.zones(), []);
+    assert.deepEqual(await api.domains(), []);
+    assert.equal(calls, 2);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test('分页 API 完整读取所有页', async () => {
   const paths = [];
   const api = new Cloudflare({ CF_ACCOUNT_ID: 'b'.repeat(32), CF_API_TOKEN: 'fixture' }, async url => {
