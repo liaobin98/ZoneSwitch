@@ -1,0 +1,108 @@
+name: 检查并部署 ZoneSwitch
+
+on:
+  push:
+    branches: [main, release]
+  pull_request:
+    branches: [main, release]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'auto 按变化部署；其他选项强制更新指定 Worker'
+        type: choice
+        default: auto
+        options: [auto, all, admin, maintenance, billing]
+
+permissions:
+  contents: read
+
+# 同一分支串行运行，不在三套 Worker 部署到一半时取消任务。
+concurrency:
+  group: zoneswitch-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  verify:
+    name: 类型检查和构建
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:ci
+      - run: npm run dry-run:all
+      - name: 保存同一版本的三套静态产物
+        if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request' && vars.AUTO_DEPLOY == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: zoneswitch-${{ github.sha }}
+          path: |
+            dist/client
+            dist/static-maintenance
+            dist/static-billing
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 3
+
+  deploy:
+    name: 按变化部署 Worker
+    permissions:
+      contents: read
+      deployments: write
+    needs: verify
+    if: github.ref == 'refs/heads/release' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.AUTO_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: 跳过已被新提交替代的版本
+        id: revision
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          latest_sha="$(git ls-remote origin refs/heads/release | cut -f1)"
+          if [ -z "$latest_sha" ]; then
+            echo "无法确认 release 最新提交，停止部署。" >&2
+            exit 1
+          fi
+          if [ "$latest_sha" = "$EXPECTED_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "当前版本已被 release 新提交替代，跳过部署。"
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v7
+        if: steps.revision.outputs.current == 'true'
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm ci
+        if: steps.revision.outputs.current == 'true'
+      - uses: actions/download-artifact@v8
+        if: steps.revision.outputs.current == 'true'
+        with:
+          name: zoneswitch-${{ github.sha }}
+          path: dist
+      - name: 顺序更新内容变化的 Worker
+        if: steps.revision.outputs.current == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WORKER_NAME: ${{ secrets.WORKER_NAME || vars.WORKER_NAME }}
+          MAINTENANCE_WORKER_NAME: ${{ secrets.MAINTENANCE_WORKER_NAME || vars.MAINTENANCE_WORKER_NAME }}
+          BILLING_WORKER_NAME: ${{ secrets.BILLING_WORKER_NAME || vars.BILLING_WORKER_NAME }}
+          GITHUB_TOKEN: ${{ github.token }}
+          DEPLOY_TARGET: ${{ inputs.target || 'auto' }}
+        run: npm run deploy:all -- --incremental
