@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zone-switch-billing",
+  "compatibility_date": "2026-10-12",
+  "workers_dev": false,
+  "preview_urls": false,
+  // 纯静态部署：不要添加 main、绑定或 run_worker_first=true。
+  // 不声明 routes，保留管理后台在线上添加的临时路由。
+  "assets": {
+    "directory": "./dist/static-billing",
+    "run_worker_first": false,
+    "html_handling": "none",
+    "not_found_handling": "single-page-application"
+  }
+}

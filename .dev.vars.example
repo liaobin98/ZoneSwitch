@@ -1,0 +1,8 @@
+CF_ACCOUNT_ID="你的账号 ID"
+CONTROL_HOST="localhost"
+WORKER_NAME="zone-switch"
+MAINTENANCE_WORKER_NAME="zone-switch-maintenance"
+BILLING_WORKER_NAME="zone-switch-billing"
+ADMIN_USERNAME="admin"
+CF_API_TOKEN="你的 Cloudflare API Token"
+ADMIN_PASSWORD_HASH="运行 npm run password 生成"

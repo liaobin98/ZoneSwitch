@@ -1,0 +1,22 @@
+# 依赖、构建产物与本地运行状态
+node_modules/
+.wrangler/
+dist/
+.cache/
+test-results/
+
+# 个人配置和凭据；仅公开不含真实值的示例
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+wrangler.personal.jsonc
+secrets.json
+secrets.*.json
+
+# 本地日志与系统文件
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini

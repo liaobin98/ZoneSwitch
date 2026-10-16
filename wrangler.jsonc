@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zone-switch",
+  // 公共配置：部署身份由平台提供，个人参数在 Cloudflare 面板配置。
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-12",
+  "workers_dev": false,
+  "preview_urls": false,
+  // 保留面板变量；本文件不填写账号、域名、Token、密码或业务 Routes。
+  "keep_vars": true,
+  // 不声明 secrets.required：本地 .dev.vars 与线上面板可使用完整的个人参数。
+  // 线上 CF_API_TOKEN、ADMIN_PASSWORD_HASH 等 Secrets 按 docs/deployment.md 添加。
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "STATE", "class_name": "ZoneSwitchState" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ZoneSwitchState"] }]
+}

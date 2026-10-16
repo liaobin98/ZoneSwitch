@@ -1,0 +1,11 @@
+# 源码和文档统一使用 LF；Windows 启动脚本保留 CRLF。
+* text=auto eol=lf
+*.bat text eol=crlf
+
+# 截图等二进制资源不进行换行转换。
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.webp binary
