@@ -1,0 +1,7 @@
+#notice-languages { margin-top: 28px; min-height: 40px; }
+.notice-language-group { display: inline-flex; flex-wrap: wrap; justify-content: center; max-width: 100%; gap: 4px; padding: 4px; border: 1px solid #e2e7ee; border-radius: 10px; background: #f8fafc; }
+.notice-language-button { box-sizing: border-box; appearance: none; border: 0; border-radius: 6px; background: transparent; color: #596579; min-height: 32px; padding: 5px 10px; font: inherit; font-size: 13px; line-height: 22px; white-space: nowrap; cursor: pointer; }
+.notice-language-button:hover { background: #edf2f7; color: #192332; }
+.notice-language-button[data-state="on"] { background: white; color: #2563eb; font-weight: 600; box-shadow: 0 1px 3px #19233218; }
+.notice-language-group[data-mode="billing"] .notice-language-button[data-state="on"] { color: #b45309; }
+.notice-language-button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
