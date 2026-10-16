@@ -71,7 +71,7 @@ For production use, prepare your own Cloudflare account, domains, management API
 | Cloudflare Workers Builds | Connect the repository in Cloudflare and build each Worker independently | [Workers Builds deployment](docs/deployment.en.md#3b-deploy-with-cloudflare-workers-builds) |
 | GitHub Actions | Verify the project in your fork and deploy changed Workers in sequence | [GitHub Actions deployment](docs/deployment.en.md#3a-deploy-with-github-actions) |
 
-Use `main` for development and `release` for production releases. Keep the `release` branch in your fork, select it as the Workers Builds production branch, and choose it when running GitHub Actions manually. The development branch runs checks; merge accepted changes into the release branch for deployment.
+Use `main` for development and local checks. GitHub Actions checks, builds, and deployment run only on `release`; pushes to `main` and pull requests do not trigger the workflow. Keep the `release` branch in your fork, select it as the Workers Builds production branch, and choose it when running GitHub Actions manually. Merge accepted changes into `release` for deployment.
 
 The project contains three Workers: `zone-switch` (admin console), `zone-switch-maintenance` (maintenance page), and `zone-switch-billing` (overdue page). The admin Worker uses a Durable Object for sessions, inventory, route ownership, and activity history. Normal business traffic goes directly to the original service.
 

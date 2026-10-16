@@ -6,8 +6,8 @@
 
 ## 分支约定
 
-- `main`：日常开发分支，执行 CI 检查。
-- `release`：生产发布分支。人工验收后，将已确认的版本合入此分支。
+- `main`：日常开发分支，在本地运行检查，不触发 GitHub Actions。
+- `release`：生产发布分支，运行 GitHub Actions 的检查、构建与部署。人工验收后，将已确认的版本合入此分支；PR 不触发工作流，手动运行也必须选择 `release`。
 - GitHub Actions 只允许 `release` 自动部署；Cloudflare Workers Builds 的三个 Worker 也选择 `release` 为生产分支。同一套 Worker 只启用一种部署方式。
 - 按功能使用中文提交信息。提交、推送、线上部署、标签及 GitHub Release 均按用户明确确认的范围执行。
 - 每次正式发布都必须在 GitHub Release 页面填写整理后的中文更新内容，不能只发布标签。版本说明保存在 `docs/releases/<版本>.md`，与 `CHANGELOG.md` 一起维护。

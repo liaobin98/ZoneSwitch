@@ -71,7 +71,7 @@ npm run dev
 | Cloudflare Workers Builds | 在 Cloudflare 中连接仓库，分别构建三个 Worker | [Workers Builds 部署](docs/deployment.md#4a-在-cloudflare-连接-githubworkers-builds) |
 | GitHub Actions | 在 Fork 中统一检查，按顺序部署内容变化的 Worker | [GitHub Actions 部署](docs/deployment.md#4b-在自己的-fork-配置-github-actions) |
 
-`main` 用于日常开发，`release` 用于生产发布。Fork 时保留 `release` 分支；Workers Builds 的生产分支和 GitHub Actions 手动运行分支均选择 `release`。开发分支只检查，验收后的版本再合入发布分支。
+`main` 用于日常开发和本地检查；GitHub Actions 的检查、构建与部署仅在 `release` 运行，`main` 推送和 PR 不触发工作流。Fork 时保留 `release` 分支；Workers Builds 的生产分支和 GitHub Actions 手动运行分支均选择 `release`。验收后的版本再合入发布分支。
 
 项目包含三个 Worker：`zone-switch`（管理后台）、`zone-switch-maintenance`（维护页）和 `zone-switch-billing`（欠费页）。后台使用 Durable Object 保存会话、域名清单、路由归属和操作记录；正常业务流量直接访问原服务。
 

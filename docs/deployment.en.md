@@ -4,7 +4,7 @@
 
 Use your own Cloudflare account, domains, and repository. Choose **one deployment trigger** for the same set of Workers: GitHub Actions or Cloudflare Workers Builds.
 
-Use `main` for development and `release` for production. Pushes and pull requests targeting either branch run checks, while only `release` can trigger production deployment in GitHub Actions. Select `release` as the production branch for all three Workers Builds projects too. Merge your development changes into the release branch after acceptance.
+Use `main` for development and local checks. GitHub Actions checks, builds, and deployment run only for pushes to `release` or manual runs selecting `release`; pushes to `main` and pull requests do not trigger the workflow. Select `release` as the production branch for all three Workers Builds projects too. Merge your development changes into the release branch after acceptance.
 
 Screenshots were captured on October 16, 2026 and cropped to exclude account details, avatars, repository ownership, and personal domains. Field names and `AUTO_DEPLOY=true` are unsaved examples; secret values are blank. These images show where to configure deployment, not a completed deployment. All screenshots use the English interface.
 
@@ -80,9 +80,9 @@ For step 3, switch to **Variables → New repository variable**, set **Name** to
 
 ![GitHub New repository variable form, showing AUTO_DEPLOY with the example value true](screenshots/deployment/github-auto-deploy-variable.jpg)
 
-The workflow runs tests, type checks, builds, and three dry-runs. It then deploys changed Workers in this order: **maintenance → overdue → admin**. The first deployment creates the two visitor Workers. Pull requests run verification only.
+On `release`, the workflow runs tests, type checks, builds, and three dry-runs. With `AUTO_DEPLOY=true`, it then deploys changed Workers in this order: **maintenance → overdue → admin**. The first deployment creates the two visitor Workers.
 
-Commits on `main` run checks without deployment. Select `release` when using **Run workflow**; selecting `main` does not bypass the production branch restriction.
+Commits on `main` do not trigger GitHub Actions; run development checks locally. Select `release` when using **Run workflow**. If another branch is selected manually, all jobs are skipped without running checks, builds, or deployment.
 
 For later upstream updates, use **Sync fork → Update branch** on your own fork. For a forced redeployment, choose `all`, `admin`, `maintenance`, or `billing` in the workflow. Custom Worker names must match both the deployment settings and admin runtime variables.
 

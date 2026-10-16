@@ -2,9 +2,7 @@ name: 检查并部署 ZoneSwitch
 
 on:
   push:
-    branches: [main, release]
-  pull_request:
-    branches: [main, release]
+    branches: [release]
   workflow_dispatch:
     inputs:
       target:
@@ -18,7 +16,7 @@ permissions:
 
 # 同一分支串行运行，不在三套 Worker 部署到一半时取消任务。
 concurrency:
-  group: zoneswitch-${{ github.event.pull_request.number || github.ref }}
+  group: zoneswitch-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -27,6 +25,7 @@ env:
 jobs:
   verify:
     name: 类型检查和构建
+    if: github.ref == 'refs/heads/release' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -42,7 +41,7 @@ jobs:
       - run: npm run build:ci
       - run: npm run dry-run:all
       - name: 保存同一版本的三套静态产物
-        if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request' && vars.AUTO_DEPLOY == 'true'
+        if: vars.AUTO_DEPLOY == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: zoneswitch-${{ github.sha }}

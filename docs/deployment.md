@@ -11,7 +11,7 @@
 | Cloudflare Workers Builds | Cloudflare 连接自己的 GitHub Fork 和分支 | 三个 Worker 分别自动构建部署 |
 | GitHub Actions | 自己的 Fork 配置 Actions Secrets 和 Variables | 比较每个 Worker 的部署内容，仅顺序更新变化的 Worker |
 
-分支约定：`main` 用于开发，`release` 用于生产发布。两条分支的推送与 PR 都运行检查，只有 `release` 可触发 GitHub Actions 生产部署；三个 Workers Builds 项目也统一选择 `release`。自己的开发修改先验收，再合入发布分支。
+分支约定：`main` 用于开发和本地检查；GitHub Actions 的检查、构建与部署仅在推送 `release` 或手动选择 `release` 时运行，`main` 推送和 PR 不触发工作流。三个 Workers Builds 项目也统一选择 `release`。自己的开发修改先验收，再合入发布分支。
 
 使用 Workers Builds 按第 4A 节操作，跳过第 4B、5 节；使用 GitHub Actions 按第 4B、5 节操作。后台账号、管理 Token 和后台域名均在 Cloudflare 面板配置。默认名称无需修改公开 Wrangler 配置，也无需创建本地个人部署配置或 `.dev.vars`。
 
@@ -214,7 +214,7 @@ scripts/static-notices.mjs
 
 工作流默认生产分支 `release`。如果改用其他分支，需要一起修改工作流的触发分支、部署条件和最新提交检查中的 `refs/heads/release`。
 
-`main` 上的提交只检查，不部署。使用 **Run workflow** 时选择 `release`；选择 `main` 不会绕过生产分支限制。
+`main` 上的提交不触发 GitHub Actions，开发检查在本地执行。使用 **Run workflow** 时选择 `release`；手动选择其他分支时，所有任务均跳过，不执行检查、构建或部署。
 
 ## 5. 执行第一次 GitHub Actions 部署
 
@@ -230,7 +230,7 @@ scripts/static-notices.mjs
   → 按维护页 → 欠费页 → 后台的顺序，仅更新变化的 Worker
 ```
 
-工作流文件为 [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)，部署脚本为 [`scripts/deploy.mjs`](../scripts/deploy.mjs)。之后每次推送或合并到自己的 `release` 会自动检查三套，但仅部署内容变化的 Worker，PR 只检查。部署密钥只注入部署步骤。
+工作流文件为 [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)，部署脚本为 [`scripts/deploy.mjs`](../scripts/deploy.mjs)。之后每次推送或合并到自己的 `release` 会自动检查三套；启用 `AUTO_DEPLOY=true` 时仅部署内容变化的 Worker。PR 不触发工作流。部署密钥只注入部署步骤。
 
 | 修改范围 | 自动部署结果 |
 | --- | --- |
@@ -309,7 +309,7 @@ scripts/static-notices.mjs
 
 | 现象 | 检查与处理 |
 | --- | --- |
-| Actions 没有部署任务 | 启用 Fork 的工作流；确认 `AUTO_DEPLOY` 为小写 `true`、分支为 `release`；PR 只检查 |
+| Actions 没有部署任务 | 启用 Fork 的工作流；确认 `AUTO_DEPLOY` 为小写 `true`、分支为 `release`；`main` 推送与 PR 不触发，手动选择其他分支时全部跳过 |
 | Workers Builds 没有触发 | 检查 GitHub 集成授权、连接的 Fork 和生产分支；确认新提交命中 Build watch paths |
 | Workers Builds 部署错目标或提示名称不一致 | 检查 Deploy command 是否指定对应配置和名称，默认配置只对应后台 |
 | Actions 内容未变化但需要重新部署 | Run workflow 选择指定 target 或 all；手动修改线上内容不会自动更新 GitHub 摘要 |
