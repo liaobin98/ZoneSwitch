@@ -11,3 +11,7 @@ export const descriptions: Record<Mode, string> = {
 export const colors = { normal: 'green', maintenance: 'blue', billing: 'amber' } as const;
 export const hostKey = (host: Host) => host.zoneId + ':' + host.hostname;
 export const selectable = (host: Host) => host.actionable || (host.mode !== 'normal' || Boolean(host.needsVerification)) && !host.reason.includes('管理后台');
+// 已确认的当前状态不能重复切换；待核实的状态仍保留核实与恢复操作。
+export const canChangeMode = (host: Host, mode: Mode) => selectable(host)
+  && (host.actionable || mode === 'normal')
+  && (Boolean(host.needsVerification) || host.mode !== mode);

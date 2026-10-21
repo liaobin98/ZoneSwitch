@@ -2,7 +2,7 @@ import { Badge, Button, Tooltip } from '@radix-ui/themes';
 import { ArrowRight, CircleCheck, CircleDollarSign, Globe2, Server, ShieldCheck, Workflow, Wrench } from 'lucide-react';
 import type { Host, Mode } from '../../../shared/contracts.ts';
 import { useConsoleI18n } from '../i18n.tsx';
-import { actionLabels, colors, labels, modes, selectable } from '../model/services.ts';
+import { actionLabels, canChangeMode, colors, labels, modes } from '../model/services.ts';
 
 const modeIcons = { normal: CircleCheck, maintenance: Wrench, billing: CircleDollarSign };
 
@@ -52,7 +52,7 @@ export function ModeActions({ host, disabled, onChange }: { host: Host; disabled
     {modes.map(mode => {
       const Icon = modeIcons[mode];
       const current = !host.needsVerification && mode === host.mode;
-      return <Button key={mode} variant="outline" color={colors[mode]} size="1" className="mode-action" aria-label={host.hostname + ': ' + t(actionLabels[mode])} aria-pressed={current} disabled={disabled || !selectable(host) || !host.actionable && mode !== 'normal'} onClick={event => onChange(host, mode, event.currentTarget)}>
+      return <Button key={mode} variant="outline" color={colors[mode]} size="1" className="mode-action" aria-label={host.hostname + ': ' + t(actionLabels[mode])} aria-pressed={current} disabled={disabled || !canChangeMode(host, mode)} onClick={event => onChange(host, mode, event.currentTarget)}>
         <Icon size={13} aria-hidden />{t(actionLabels[mode])}
       </Button>;
     })}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChangeResult, Host, Inventory, Mode } from '../../../shared/contracts.ts';
 import { api, ApiError } from '../api.ts';
 import type { Session } from '../api.ts';
-import { hostKey, selectable } from '../model/services.ts';
+import { canChangeMode, hostKey, selectable } from '../model/services.ts';
 
 const emptyInventory: Inventory = { zones: [], syncedAt: null, demo: false };
 interface Pending { hosts: Host[]; mode: Mode; results: ChangeResult[]; error: string; finished: boolean; progress: string }
@@ -64,7 +64,11 @@ export function useConsole() {
   const selectionState: boolean | 'indeterminate' = checkedCount === 0 ? false : checkedCount === selectableVisible.length ? true : 'indeterminate';
   function selectHost(host: Host, checked: boolean) { setSelected(previous => { const next = new Set(previous); checked ? next.add(hostKey(host)) : next.delete(hostKey(host)); return next; }); }
   function selectHosts(hosts: Host[], checked = true) { setSelected(previous => { const next = new Set(previous); for (const host of hosts.filter(selectable)) checked ? next.add(hostKey(host)) : next.delete(hostKey(host)); return next; }); }
-  function openChange(hosts: Host[], mode: Mode, trigger: HTMLElement | null) { if (busy || !hosts.length) return; changeTrigger.current = trigger; setPending({ hosts, mode, results: [], error: '', finished: false, progress: '' }); }
+  function openChange(hosts: Host[], mode: Mode, trigger: HTMLElement | null) {
+    const targets = hosts.filter(host => canChangeMode(host, mode));
+    if (busy || !targets.length) return;
+    changeTrigger.current = trigger; setPending({ hosts: targets, mode, results: [], error: '', finished: false, progress: '' });
+  }
   async function login(username: string, password: string) {
     setLoginError(''); setLoginBusy(true);
     try { const auth = await api<Session>('login', '', { username, password }); setSession(auth); try { setInventory(await api<Inventory>('inventory')); } catch (error) { setNotice({ text: messageOf(error), error: true }); } }
