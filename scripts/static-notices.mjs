@@ -1,5 +1,6 @@
 import { cp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 import { noticeMarkup, noticeHeaders } from '../src/maintenance.ts';
 
 export async function buildStaticNotices() {
@@ -15,8 +16,12 @@ export async function buildStaticNotices() {
       await rm(entryPath, { recursive: true, force: true });
     }
     await cp(resolve(outputRoot, 'client/__zoneswitch_notice'), resolve(target, '__zoneswitch_notice'), { recursive: true });
-    await writeFile(resolve(target, 'index.html'), noticeMarkup(mode));
-    await writeFile(resolve(target, '_headers'), '/*\n' + Object.entries(noticeHeaders).map(([key, value]) => '  ' + key + ': ' + value).join('\n') + '\n');
+    const html = noticeMarkup(mode);
+    // 仅授权这份静态 HTML 中的固定内联脚本，不放宽为 unsafe-inline。
+    const hashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => "'sha256-" + createHash('sha256').update(match[1]).digest('base64') + "'");
+    const headers = { ...noticeHeaders, 'Content-Security-Policy': noticeHeaders['Content-Security-Policy'].replace("script-src 'self'", "script-src 'self' " + hashes.join(' ')) };
+    await writeFile(resolve(target, 'index.html'), html);
+    await writeFile(resolve(target, '_headers'), '/*\n' + Object.entries(headers).map(([key, value]) => '  ' + key + ': ' + value).join('\n') + '\n');
     await writeFile(resolve(target, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   }
 }

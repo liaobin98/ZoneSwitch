@@ -8,6 +8,8 @@ export const noticeLanguages = [
 export type NoticeLocale = typeof noticeLanguages[number]['value'];
 export type NoticeMode = Exclude<Mode, 'normal'>;
 
+export const noticeGroupLabels: Record<NoticeLocale, string> = { 'zh-Hant': '切換語言', ja: '言語を切り替える', en: 'Switch language' };
+
 export const noticeMessages: Record<NoticeLocale, Record<NoticeMode, { title: string; message: string }>> = {
   'zh-Hant': {
     maintenance: { title: '服務維護中', message: '服務正在維護中，請稍後再試。感謝您的理解與耐心等候。' },
@@ -33,9 +35,4 @@ export function localeForCountry(country: unknown): NoticeLocale {
     case 'JP': return 'ja';
     default: return 'en';
   }
-}
-
-export function localeForTrace(trace: string): NoticeLocale {
-  // loc 是访客出口地区，colo 是数据中心；不要把节点所在地误当成访客地区。
-  return localeForCountry(/^loc=([A-Z]{2})\r?$/m.exec(trace)?.[1]);
 }
