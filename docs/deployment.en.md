@@ -138,7 +138,7 @@ The console uses React, Tailwind CSS, Radix UI, and Lucide. The management API r
 | Preview                  | Choose a language in the console before opening a notice                               |
 
 
-A fixed inline script in the HTML head selects a supported browser language before the first paint. Traditional Chinese (zh-Hant / zh-TW / zh-HK / zh-MO), Japanese, and English are supported; unsupported preferences fall back to English. No IP-region lookup or `/cdn-cgi/trace` request is made. All localized text and buttons are present in the static HTML. The external controls script only handles manual switching. The build generates CSP hashes for the inline scripts without enabling `script-src unsafe-inline`. Keep both notice Workers static, without a `main` entry point, asset binding, or `run_worker_first=true`; serving the notices does not invoke a dynamic Worker.
+A fixed inline script in the HTML head selects a supported browser language before the first paint. Traditional Chinese (for all Chinese browser languages, including zh-CN / zh-Hans), Japanese, and English are supported; unsupported preferences fall back to English. No IP-region lookup or `/cdn-cgi/trace` request is made. All localized text and buttons are present in the static HTML. The external controls script only handles manual switching. The build generates CSP hashes for the inline scripts without enabling `script-src unsafe-inline`. Keep both notice Workers static, without a `main` entry point, asset binding, or `run_worker_first=true`; serving the notices does not invoke a dynamic Worker.
 
 ## Operational notes
 

@@ -89,7 +89,7 @@ Choose one automatic deployment method for the same set of Workers. With Workers
 | Cloudflare-proxied A / AAAA / CNAME record | Supported | Supported |
 | Unproxied A / AAAA / CNAME record | Supported | Unsupported |
 
-Visitor notices choose a supported browser language before the first paint: Traditional Chinese (zh-Hant / zh-TW / zh-HK / zh-MO), Japanese, or English as the fallback. No location request or dynamic Worker execution is needed. Visitors can also switch manually.
+Visitor notices choose a supported browser language before the first paint: Traditional Chinese (for all Chinese browser languages, including zh-CN / zh-Hans), Japanese, or English as the fallback. No location request or dynamic Worker execution is needed. Visitors can also switch manually.
 
 ## Usage
 

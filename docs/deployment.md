@@ -42,7 +42,7 @@ Fork 不会复制上游 Secrets，也不会自动连接 Cloudflare。先完成�
 
 正常业务不经过管理 Worker，也不查询 DO。开启提示由后台添加临时 Route，恢复后核验并删除，保留原业务 DNS 和 Custom Domain。两个静态配置保持无 `main`、无 DO、`assets.run_worker_first=false`；后台的 `run_worker_first=true` 用于鉴权，不能照搬静态配置。DO 由后台的 `STATE` 绑定及 `v1` SQLite 迁移创建，不需要另外创建 KV、D1 或 R2。
 
-访客页在 head 中用固定内联脚本同步读取浏览器语言，首次绘制前选好繁体中文、日文或英文；未知语言回退英文。不会请求 `/cdn-cgi/trace`，不按 IP 地区定位，也不会在加载后自动替换语言。语言按钮与文案已在静态 HTML 中，外部控件脚本只负责手动切换。构建时为固定内联脚本生成 CSP 哈希，不启用 `script-src unsafe-inline`。两个提示 Worker 保持纯静态，不配置 `main`、资产绑定或 `run_worker_first=true`，不增加动态 Worker 请求。
+访客页在 head 中用固定内联脚本同步读取浏览器语言，首次绘制前选好繁体中文、日文或英文；所有中文语言标识（包括 zh-CN / zh-Hans）均显示现有繁体中文文案，未知语言回退英文。不会请求 `/cdn-cgi/trace`，不按 IP 地区定位，也不会在加载后自动替换语言。语言按钮与文案已在静态 HTML 中，外部控件脚本只负责手动切换。构建时为固定内联脚本生成 CSP 哈希，不启用 `script-src unsafe-inline`。两个提示 Worker 保持纯静态，不配置 `main`、资产绑定或 `run_worker_first=true`，不增加动态 Worker 请求。
 
 ### 创建两种 API Token
 

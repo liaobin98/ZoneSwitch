@@ -11,8 +11,11 @@ test('静态提示页在首次绘制前按浏览器语言选择，不依赖地�
     for (const [preferences, expected] of [
       [['zh-TW'], 'zh-Hant'], [['zh-HK'], 'zh-Hant'], [['zh-MO'], 'zh-Hant'],
       [['zh-Hant'], 'zh-Hant'], [['zh-Hant-TW'], 'zh-Hant'], [['ZH_hant_HK'], 'zh-Hant'],
+      [['zh'], 'zh-Hant'], [['zh-CN'], 'zh-Hant'], [['zh-Hans'], 'zh-Hant'],
+      [['zh-Hans-CN'], 'zh-Hant'], [['zh-SG'], 'zh-Hant'], [['ZH_cn'], 'zh-Hant'],
       [['ja-JP'], 'ja'], [['en-US', 'ja'], 'en'], [['fr-FR', 'ja'], 'ja'],
-      [['zh-CN', 'en-US'], 'en'], [['fr-FR'], 'en'], [[], 'en'],
+      [['zh-CN', 'en-US'], 'zh-Hant'], [['en-US', 'zh-CN'], 'en'],
+      [['zho'], 'en'], [['fr-FR'], 'en'], [[], 'en'],
     ]) {
       const document = { documentElement: { lang: 'en' }, title: '' };
       // 不提供 fetch、存储或 Cloudflare 元数据，脚本仍能独立选择语言。
@@ -21,8 +24,8 @@ test('静态提示页在首次绘制前按浏览器语言选择，不依赖地�
       assert.equal(document.title, noticeMessages[expected][mode].title);
     }
     const document = { documentElement: { lang: 'en' }, title: '' };
-    runInNewContext(noticeLocaleScript(mode), { navigator: { language: 'ja' }, document });
-    assert.equal(document.documentElement.lang, 'ja');
+    runInNewContext(noticeLocaleScript(mode), { navigator: { language: 'zh-CN' }, document });
+    assert.equal(document.documentElement.lang, 'zh-Hant');
     const unavailable = { documentElement: { lang: 'en' }, title: '' };
     runInNewContext(noticeLocaleScript(mode), { document: unavailable });
     assert.equal(unavailable.documentElement.lang, 'en');
