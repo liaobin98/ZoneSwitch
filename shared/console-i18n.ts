@@ -36,6 +36,9 @@ export const consoleEnglish: Record<string, string> = {
   '将移除临时提示路由；通配维护下会添加恢复例外。': 'The temporary notice route will be removed. A restoration exception will be added for wildcard maintenance.',
   '将域名路由切换到对应静态提示页。': 'The domain route will switch to the corresponding static notice.',
   '完成': 'Done', '取消': 'Cancel', '处理中…': 'Processing…', '确认切换': 'Confirm change', '关闭提示': 'Dismiss notification',
+  '操作进度': 'Operation progress',
+  ' 请同步域名后确认实际状态。': ' Sync domains to verify the actual state.',
+  '列表更新失败，请同步域名后确认实际状态。': 'Could not update the list. Sync domains to verify the actual state.',
   'Worker：': 'Worker:', 'DNS A：': 'DNS A:', 'DNS AAAA：': 'DNS AAAA:', 'DNS CNAME：': 'DNS CNAME:',
   '未取得名称': 'Name unavailable', '同步后显示记录值': 'Sync to load record values',
   '入口已保护': 'Protected entry point', '路由冲突': 'Route conflict', '未开启代理': 'Proxy disabled', '暂不可开启': 'Unavailable',
@@ -108,6 +111,7 @@ export function translateConsole(locale: ConsoleLocale, text: string, values: Re
         [/^已同步 (\d+) 个域、(\d+) 个域名。$/, (zones, hosts) => `Synced ${zones} zones and ${hosts} domains.`],
         [/^同步完成，(\d+) 个域读取失败，请查看列表中的原因。$/, count => `Sync finished. Could not read ${count} zones. See the reasons in the list.`],
         [/^处理中 (\d+)–(\d+) \/ (\d+)$/, (start, end, total) => `Processing ${start}–${end} / ${total}`],
+        [/^已处理 (\d+) \/ (\d+)$/, (done, total) => `Processed ${done} / ${total}`],
         [/^操作完成：(\d+) 个成功(?:，(\d+) 个失败，请查看处理结果)?。$/, (success, failed) => `Completed: ${success} succeeded${failed ? `, ${failed} failed. Review the results` : ''}.`],
         [/^操作完成：(\d+) 个成功，(\d+) 个失败，(\d+) 个待核实。$/, (success, failed, uncertain) => `Completed: ${success} succeeded, ${failed} failed, ${uncertain} need verification.`],
         [/^Cloudflare API 请求失败（(\d+)）(?:：(.+)|。)$/, (status, detail) => `Cloudflare API request failed (${status})${detail ? ': ' + detail : '.'}`],
@@ -118,6 +122,8 @@ export function translateConsole(locale: ConsoleLocale, text: string, values: Re
       }
       const suffix = ' 已完成的结果见下方；其余域名的状态请同步后核实。';
       if (text.endsWith(suffix)) translated = translateConsole(locale, text.slice(0, -suffix.length)) + consoleEnglish[suffix];
+      const syncSuffix = ' 请同步域名后确认实际状态。';
+      if (text.endsWith(syncSuffix)) translated = translateConsole(locale, text.slice(0, -syncSuffix.length)) + consoleEnglish[syncSuffix];
     }
   }
   if (locale === 'en' && values.count === 1 && (text === '{count} 个域名' || text === '将对 {count} 个域名设置「{mode}」。')) translated = translated.replace('domains', 'domain');
