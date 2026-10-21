@@ -14,12 +14,12 @@ Your server's A / AAAA / CNAME records must be proxied by Cloudflare. Worker ser
 
 Create a management API token with these permissions, limited to the account and zones you want to manage:
 
-| Resource | Permission | Purpose |
-| --- | --- | --- |
-| Zone | Zone Read | List zones |
-| Zone | DNS Read | Read service records |
-| Zone | Workers Routes Edit / Write | Read and modify temporary routes |
-| Account | Workers Scripts Read | List Workers Custom Domains |
+| Resource | Permission                  | Purpose                          |
+| -------- | --------------------------- | -------------------------------- |
+| Zone     | Zone Read                   | List zones                       |
+| Zone     | DNS Read                    | Read service records             |
+| Zone     | Workers Routes Edit / Write | Read and modify temporary routes |
+| Account  | Workers Scripts Read        | List Workers Custom Domains      |
 
 This runtime token is separate from the deployment token that uploads Workers.
 
@@ -39,22 +39,22 @@ npm run password
 
 Open the admin Worker's **Settings → Runtime variables and secrets → Add variable**. Some dashboard versions label this section **Variables & Secrets**. Add the following settings:
 
-| Name | Kind | Value |
-| --- | --- | --- |
-| `CF_ACCOUNT_ID` | Secret | Your Cloudflare account ID |
-| `CONTROL_HOST` | Secret | Your admin hostname, e.g. `control.example.com`, without a scheme or path |
-| `WORKER_NAME` | Variable | `zone-switch` |
-| `MAINTENANCE_WORKER_NAME` | Variable | `zone-switch-maintenance` |
-| `BILLING_WORKER_NAME` | Variable | `zone-switch-billing` |
-| `ADMIN_USERNAME` | Secret | Your chosen admin username |
-| `CF_API_TOKEN` | Secret | Your management API token |
-| `ADMIN_PASSWORD_HASH` | Secret | The output of `npm run password` |
+| Name                      | Kind     | Value                                                                     |
+| ------------------------- | -------- | ------------------------------------------------------------------------- |
+| `CF_ACCOUNT_ID`           | Secret   | Your Cloudflare account ID                                                |
+| `CONTROL_HOST`            | Secret   | Your admin hostname, e.g. `control.example.com`, without a scheme or path |
+| `WORKER_NAME`             | Variable | `zone-switch`                                                             |
+| `MAINTENANCE_WORKER_NAME` | Variable | `zone-switch-maintenance`                                                 |
+| `BILLING_WORKER_NAME`     | Variable | `zone-switch-billing`                                                     |
+| `ADMIN_USERNAME`          | Secret   | Your chosen admin username                                                |
+| `CF_API_TOKEN`            | Secret   | Your management API token                                                 |
+| `ADMIN_PASSWORD_HASH`     | Secret   | The output of `npm run password`                                          |
 
 Account IDs, hostnames, and usernames are stored as Secrets here to keep personal deployment details out of the public configuration. Existing plain-text variables also work for these three settings. The API token and password hash must be Secrets.
 
 The example below uses `CF_API_TOKEN`: select **Production**, enter the name in **Key** and your own token in **Value**, then enable **Secret**. Leave that checkbox off for the three plain-text Worker name variables. Click **Add variable and deploy** when ready; the button includes the number of variables after you enter a name. The screenshot leaves the secret value blank; add all settings in the table before using the console.
 
-![Cloudflare production runtime secret form, with CF_API_TOKEN as the name and no secret value](screenshots/deployment/cloudflare-runtime-secret-en.jpg)
+![Cloudflare production runtime secret form, with CF\_API\_TOKEN as the name and no secret value](screenshots/deployment/cloudflare-runtime-secret-en.jpg)
 
 Open the admin Worker's **Domains** tab and click **Add Domain**. Follow the dashboard flow to select your managed domain and configure a **Custom Domain** matching `CONTROL_HOST`. Some dashboard versions use **Settings → Domains & Routes**. Setting the variable alone does not bind the domain. Use HTTPS for the deployed console, leave `DEMO_MODE` unset, and choose your own password.
 
@@ -74,11 +74,11 @@ The two visitor Workers do not need admin credentials. The supplied configuratio
 
 For step 2, open the **Secrets** tab and click **New repository secret**. Add each deployment secret separately. The example below uses `CLOUDFLARE_API_TOKEN`; enter your own deployment token in **Secret**, then click **Add secret**. Repeat for `CLOUDFLARE_ACCOUNT_ID`. No credential value is shown in the screenshot.
 
-![GitHub New repository secret form, with CLOUDFLARE_API_TOKEN as the name and an empty Secret field](screenshots/deployment/github-new-secret.jpg)
+![GitHub New repository secret form, with CLOUDFLARE\_API\_TOKEN as the name and an empty Secret field](screenshots/deployment/github-new-secret.jpg)
 
 For step 3, switch to **Variables → New repository variable**, set **Name** to `AUTO_DEPLOY` and **Value** to lowercase `true`, then click **Add variable**. The screenshot shows an unsaved example. Keep this variable unset or `false` when using Workers Builds.
 
-![GitHub New repository variable form, showing AUTO_DEPLOY with the example value true](screenshots/deployment/github-auto-deploy-variable.jpg)
+![GitHub New repository variable form, showing AUTO\_DEPLOY with the example value true](screenshots/deployment/github-auto-deploy-variable.jpg)
 
 On `release`, the workflow runs tests, type checks, builds, and three dry-runs. With `AUTO_DEPLOY=true`, it then deploys changed Workers in this order: **maintenance → overdue → admin**. The first deployment creates the two visitor Workers.
 
@@ -90,11 +90,11 @@ For later upstream updates, use **Sync fork → Update branch** on your own fork
 
 Connect each Worker to your fork's `release` branch using the repository root:
 
-| Worker | Build command | Deploy command |
-| --- | --- | --- |
+| Worker                    | Build command      | Deploy command               |
+| ------------------------- | ------------------ | ---------------------------- |
 | `zone-switch-maintenance` | `npm run build:ci` | `npm run deploy:maintenance` |
-| `zone-switch-billing` | `npm run build:ci` | `npm run deploy:billing` |
-| `zone-switch` | `npm run build:ci` | `npm run deploy:ci` |
+| `zone-switch-billing`     | `npm run build:ci` | `npm run deploy:billing`     |
+| `zone-switch`             | `npm run build:ci` | `npm run deploy:ci`          |
 
 Prepare the three named Workers, configure the admin variables above, and use the platform's deployment identity. Keep GitHub's `AUTO_DEPLOY` unset or `false` when using Workers Builds.
 
@@ -110,11 +110,11 @@ To change the deployed password, generate another hash and update the admin Work
 
 ## How it works
 
-| Worker | Responsibility |
-| --- | --- |
-| `zone-switch` | Admin UI, authentication, management API, stored state, and activity history |
-| `zone-switch-maintenance` | Static maintenance notice |
-| `zone-switch-billing` | Static overdue notice |
+| Worker                    | Responsibility                                                               |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| `zone-switch`             | Admin UI, authentication, management API, stored state, and activity history |
+| `zone-switch-maintenance` | Static maintenance notice                                                    |
+| `zone-switch-billing`     | Static overdue notice                                                        |
 
 ```text
 Online       business domain → original Worker Custom Domain / server
@@ -130,14 +130,15 @@ The console uses React, Tailwind CSS, Radix UI, and Lucide. The management API r
 
 ## Languages
 
-| Interface | Languages / behavior |
-| --- | --- |
-| Admin console | Simplified Chinese and English, manually selectable and remembered in the browser |
-| Visitor notices | Traditional Chinese for TW / HK / MO, Japanese for JP, English elsewhere |
-| Manual visitor selection | Visitors can choose any of the three languages; refreshing runs region detection again |
-| Preview | Choose a language in the console before opening a notice |
+| Interface                | Languages / behavior                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| Admin console            | Simplified Chinese and English, manually selectable and remembered in the browser      |
+| Visitor notices          | Supported browser language: Traditional Chinese, Japanese, or English               |
+| Manual visitor selection | Visitors can choose any of the three languages; refreshing uses the browser language again |
+| Preview                  | Choose a language in the console before opening a notice                               |
 
-Region detection uses Cloudflare's same-origin `/cdn-cgi/trace` endpoint and its `loc` field, with a two-second timeout. It falls back to English if unavailable. It does not upload or retain the diagnostic IP information. A late region response does not override a manual language selection.
+
+A fixed inline script in the HTML head selects a supported browser language before the first paint. Traditional Chinese (zh-Hant / zh-TW / zh-HK / zh-MO), Japanese, and English are supported; unsupported preferences fall back to English. No IP-region lookup or `/cdn-cgi/trace` request is made. All localized text and buttons are present in the static HTML. The external controls script only handles manual switching. The build generates CSP hashes for the inline scripts without enabling `script-src unsafe-inline`. Keep both notice Workers static, without a `main` entry point, asset binding, or `run_worker_first=true`; serving the notices does not invoke a dynamic Worker.
 
 ## Operational notes
 
@@ -150,6 +151,5 @@ Region detection uses Cloudflare's same-origin `/cdn-cgi/trace` endpoint and its
 - **Conflicting or externally modified routes are left for review.** Unproxied DNS entries can be listed but cannot be switched to a notice.
 - **Keep secrets out of the repository.** Personal runtime configuration belongs in local ignored files or Cloudflare; deployment credentials belong in the deployment platform.
 - **Keep existing Worker and Durable Object identities stable.** Do not remove a visitor Worker while its notice routes are in use. When upgrading an older version, review business routes that still point to the admin Worker; only stored exact-host legacy routes can be migrated automatically.
-
 
 [English](deployment.en.md) | [简体中文](deployment.md) · [Back to README](../README.md)

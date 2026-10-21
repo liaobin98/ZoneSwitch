@@ -89,7 +89,7 @@ Choose one automatic deployment method for the same set of Workers. With Workers
 | Cloudflare-proxied A / AAAA / CNAME record | Supported | Supported |
 | Unproxied A / AAAA / CNAME record | Supported | Unsupported |
 
-Visitor notices select a language by region: Traditional Chinese for TW / HK / MO, Japanese for JP, and English elsewhere or when region detection fails. Visitors can also switch manually between all three languages.
+Visitor notices choose a supported browser language before the first paint: Traditional Chinese (zh-Hant / zh-TW / zh-HK / zh-MO), Japanese, or English as the fallback. No location request or dynamic Worker execution is needed. Visitors can also switch manually.
 
 ## Usage
 
@@ -150,7 +150,7 @@ The console uses React, Tailwind CSS, and Radix UI. The management API runs on C
 
 For development with your account, copy `.dev.vars.example` to `.dev.vars`, fill in your own values, set `CONTROL_HOST="127.0.0.1"`, and leave `DEMO_MODE` unset. **This mode modifies real Cloudflare routes.** See the [configuration instructions](docs/deployment.en.md#local-development-with-your-account).
 
-After the main development service has built the static assets, run `npm run dev:maintenance` and `npm run dev:billing` in separate terminals to open the [maintenance page](http://127.0.0.1:8790) and [overdue page](http://127.0.0.1:8791). Local notices start in English and support manual language switching.
+After the main development service has built the static assets, run `npm run dev:maintenance` and `npm run dev:billing` in separate terminals to open the [maintenance page](http://127.0.0.1:8790) and [overdue page](http://127.0.0.1:8791). Local notices use the supported browser language, fall back to English, and support manual language switching.
 
 On Windows, run `change-admin-password.bat` to update the local password in `.dev.vars`. Enter the same 8–32 character password twice, then restart the development service. Deployed credentials are configured separately in Cloudflare.
 

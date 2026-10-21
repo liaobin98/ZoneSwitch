@@ -6,10 +6,10 @@
 
 两种方式都属于自动部署，选择一种管理同一套 Worker：
 
-| 方式 | 操作位置 | 构建与部署 |
-| --- | --- | --- |
-| Cloudflare Workers Builds | Cloudflare 连接自己的 GitHub Fork 和分支 | 三个 Worker 分别自动构建部署 |
-| GitHub Actions | 自己的 Fork 配置 Actions Secrets 和 Variables | 比较每个 Worker 的部署内容，仅顺序更新变化的 Worker |
+| 方式                        | 操作位置                                    | 构建与部署                             |
+| ------------------------- | --------------------------------------- | --------------------------------- |
+| Cloudflare Workers Builds | Cloudflare 连接自己的 GitHub Fork 和分支        | 三个 Worker 分别自动构建部署                |
+| GitHub Actions            | 自己的 Fork 配置 Actions Secrets 和 Variables | 比较每个 Worker 的部署内容，仅顺序更新变化的 Worker |
 
 分支约定：`main` 用于开发和本地检查；GitHub Actions 的检查、构建与部署仅在推送 `release` 或手动选择 `release` 时运行，`main` 推送和 PR 不触发工作流。三个 Workers Builds 项目也统一选择 `release`。自己的开发修改先验收，再合入发布分支。
 
@@ -34,35 +34,37 @@ Fork 不会复制上游 Secrets，也不会自动连接 Cloudflare。先完成�
 
 自动构建平台会安装依赖并运行配置的构建命令。首次配置只需要本地生成一次密码哈希，步骤见下一节；无需在本地执行部署或 Wrangler 登录。
 
-| Worker | 配置 | 用途 |
-| --- | --- | --- |
-| `zone-switch` | `wrangler.jsonc` | 登录、管理 API、DO 状态与日志 |
-| `zone-switch-maintenance` | `wrangler.maintenance.jsonc` | 纯静态维护提示，HTML HTTP 200 |
-| `zone-switch-billing` | `wrangler.billing.jsonc` | 纯静态欠费提示，HTML HTTP 200 |
+| Worker                    | 配置                           | 用途                    |
+| ------------------------- | ---------------------------- | --------------------- |
+| `zone-switch`             | `wrangler.jsonc`             | 登录、管理 API、DO 状态与日志    |
+| `zone-switch-maintenance` | `wrangler.maintenance.jsonc` | 静态维护提示，HTML HTTP 200 |
+| `zone-switch-billing`     | `wrangler.billing.jsonc`     | 静态欠费提示，HTML HTTP 200 |
 
 正常业务不经过管理 Worker，也不查询 DO。开启提示由后台添加临时 Route，恢复后核验并删除，保留原业务 DNS 和 Custom Domain。两个静态配置保持无 `main`、无 DO、`assets.run_worker_first=false`；后台的 `run_worker_first=true` 用于鉴权，不能照搬静态配置。DO 由后台的 `STATE` 绑定及 `v1` SQLite 迁移创建，不需要另外创建 KV、D1 或 R2。
 
+访客页在 head 中用固定内联脚本同步读取浏览器语言，首次绘制前选好繁体中文、日文或英文；未知语言回退英文。不会请求 `/cdn-cgi/trace`，不按 IP 地区定位，也不会在加载后自动替换语言。语言按钮与文案已在静态 HTML 中，外部控件脚本只负责手动切换。构建时为固定内联脚本生成 CSP 哈希，不启用 `script-src unsafe-inline`。两个提示 Worker 保持纯静态，不配置 `main`、资产绑定或 `run_worker_first=true`，不增加动态 Worker 请求。
+
 ### 创建两种 API Token
 
-| 身份 | 存放位置 | 用途 |
-| --- | --- | --- |
-| 部署身份 | Workers Builds 的 API token 设置，或 GitHub Actions 的 `CLOUDFLARE_API_TOKEN` Secret | 上传和更新 Worker |
-| `CF_API_TOKEN` | 管理 Worker 的 Secret | 同步域名和切换临时 Routes |
+| 身份             | 存放位置                                                                           | 用途               |
+| -------------- | ------------------------------------------------------------------------------ | ---------------- |
+| 部署身份           | Workers Builds 的 API token 设置，或 GitHub Actions 的 `CLOUDFLARE_API_TOKEN` Secret | 上传和更新 Worker     |
+| `CF_API_TOKEN` | 管理 Worker 的 Secret                                                             | 同步域名和切换临时 Routes |
 
 Workers Builds 在 Cloudflare 选择部署 API Token，可使用平台自动创建的 Token；无需在 GitHub 配置部署 Secrets。GitHub Actions 使用 **Edit Cloudflare Workers** 模板创建部署 Token，并存入自己的 GitHub Secrets，要求见 [官方 CI 指引](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/)。后台管理 Token 与部署身份分开，使用以下权限：
 
-| 资源 | 权限 | 用途 |
-| --- | --- | --- |
-| Zone | Zone Read | 列出授权的域 |
-| Zone | DNS Read | 读取 A / AAAA / CNAME |
-| Zone | Workers Routes Edit / Write | 查询和修改临时 Routes |
-| Account | Workers Scripts Read | 读取 Worker Custom Domains |
+| 资源      | 权限                          | 用途                       |
+| ------- | --------------------------- | ------------------------ |
+| Zone    | Zone Read                   | 列出授权的域                   |
+| Zone    | DNS Read                    | 读取 A / AAAA / CNAME      |
+| Zone    | Workers Routes Edit / Write | 查询和修改临时 Routes           |
+| Account | Workers Scripts Read        | 读取 Worker Custom Domains |
 
 账号资源覆盖 `CF_ACCOUNT_ID`，Zone 资源只授权需要管理的域。后台不需要 DNS Edit、Workers Scripts Write 或 Global API Key；面板 Edit / Write 的文字可能不同，以 Workers Routes 写权限为准。
 
 ## 3. 配置 Cloudflare 管理 Worker
 
-默认名称为 `zone-switch`、`zone-switch-maintenance`、`zone-switch-billing`。首次部署先在 Cloudflare **Workers & Pages** 创建同名管理 Worker，使用占位代码即可，用来提前保存下面的参数和 Secrets，工作流随后替换为项目代码。两个静态 Worker 可由首次 Wrangler 部署创建；已有实例继续使用原名称、原账号及 DO，不重新创建数据。
+默认名称为 `zone-switch`、`zone-switch-maintenance`、`zone-switch-billing`。首次部署先在 Cloudflare **Workers & Pages** 创建同名管理 Worker，使用占位代码即可，用来提前保存下面的参数和 Secrets，工作流随后替换为项目代码。两个提示 Worker 可由首次 Wrangler 部署创建；已有实例继续使用原名称、原账号及 DO，不重新创建数据。
 
 进入 **计算 → Workers 和 Pages → 创建应用程序**，可看到下面的方法选择界面。创建占位 Worker 时选择“**从 Hello World! 开始**”，名称填写 `zone-switch`；如果希望直接从 GitHub 创建项目，使用 **Continue with GitHub**，并按第 4A 节配置对应的构建和部署命令。
 
@@ -83,24 +85,24 @@ npm run password
 
 进入管理 Worker 的 **设置（Settings）→ 运行时变量和密钥（Runtime variables and secrets）→ 添加变量**。部分面板版本将此区域标为 **Variables & Secrets**。按下表添加：
 
-| 类型 | 名称 | 内容 |
-| --- | --- | --- |
-| Secret | `CF_ACCOUNT_ID` | 当前 Cloudflare 账号的 32 位 Account ID |
-| Secret | `CONTROL_HOST` | 自己的后台域名，如 `control.example.com`，不带协议、端口、路径或末尾斜杠 |
-| Text | `WORKER_NAME` | 管理 Worker 名称，默认 `zone-switch` |
-| Text | `MAINTENANCE_WORKER_NAME` | 维护 Worker 名称，默认 `zone-switch-maintenance` |
-| Text | `BILLING_WORKER_NAME` | 欠费 Worker 名称，默认 `zone-switch-billing` |
-| Secret | `ADMIN_USERNAME` | 自己的登录账号 |
-| Secret | `CF_API_TOKEN` | 管理业务域名的 Token，权限见 README |
-| Secret | `ADMIN_PASSWORD_HASH` | 本地 `npm run password` 生成的完整哈希 |
+| 类型     | 名称                        | 内容                                              |
+| ------ | ------------------------- | ----------------------------------------------- |
+| Secret | `CF_ACCOUNT_ID`           | 当前 Cloudflare 账号的 32 位 Account ID               |
+| Secret | `CONTROL_HOST`            | 自己的后台域名，如 `control.example.com`，不带协议、端口、路径或末尾斜杠 |
+| Text   | `WORKER_NAME`             | 管理 Worker 名称，默认 `zone-switch`                   |
+| Text   | `MAINTENANCE_WORKER_NAME` | 维护 Worker 名称，默认 `zone-switch-maintenance`       |
+| Text   | `BILLING_WORKER_NAME`     | 欠费 Worker 名称，默认 `zone-switch-billing`           |
+| Secret | `ADMIN_USERNAME`          | 自己的登录账号                                         |
+| Secret | `CF_API_TOKEN`            | 管理业务域名的 Token，权限见 README                        |
+| Secret | `ADMIN_PASSWORD_HASH`     | 本地 `npm run password` 生成的完整哈希                   |
 
 账号 ID、域名、用户名本身不是认证凭据，这里也用 Secret 保存，避免把个人部署资料写入公开仓库；已有实例使用 Text 也兼容。Token 和密码哈希必须使用 Secret。Worker 名称可用公开默认值；如果名称也不希望公开，可在 Cloudflare 改用 Secret，GitHub 部署侧则将三个名称设为同名 Repository secrets。
 
 下图以 `CF_API_TOKEN` 为例：选择“**生产**”环境，输入变量名称，在“值”中填自己的 Token，并勾选右侧“**密钥**”。Text 类型不勾选“密钥”。截图的值字段为空；填写完自己的配置后，点击“**添加变量并部署**”使其生效。若分批添加，后续仍需补齐表中全部参数。
 
-![Cloudflare 添加生产环境运行时密钥，示例名称为 CF_API_TOKEN，值留空](screenshots/deployment/cloudflare-runtime-secret.jpg)
+![Cloudflare 添加生产环境运行时密钥，示例名称为 CF\_API\_TOKEN，值留空](screenshots/deployment/cloudflare-runtime-secret.jpg)
 
-在后台 Worker 的“**域（Domains）**”标签点击“**添加域名（Add domain）**”，按面板流程选择自己托管的域并配置与 `CONTROL_HOST` 一致的 Custom Domain。部分面板版本的入口为 **Settings → Domains & Routes**。两个静态 Worker 不配置后台凭据、DO、业务 Custom Domain 或业务 Routes；后台会在开启维护时创建临时 Routes。域名绑定仍需在面板添加，单独保存 `CONTROL_HOST` 不会自动创建域名绑定。
+在后台 Worker 的“**域（Domains）**”标签点击“**添加域名（Add domain）**”，按面板流程选择自己托管的域并配置与 `CONTROL_HOST` 一致的 Custom Domain。部分面板版本的入口为 **Settings → Domains & Routes**。两个提示 Worker 不配置后台凭据、DO、业务 Custom Domain 或业务 Routes；后台会在开启维护时创建临时 Routes。域名绑定仍需在面板添加，单独保存 `CONTROL_HOST` 不会自动创建域名绑定。
 
 下面仅截取“**连接域名**”弹窗的搜索入口，域名列表已排除。选择自己账号下的域后，继续按面板提示配置实际后台主机名，例如 `control.example.com`。
 
@@ -125,11 +127,11 @@ npm run password
 3. 根目录设为仓库根目录，不要填 `src`、`ui` 或 `dist`。
 4. 按下表填写构建和部署命令，保存设置。
 
-| Worker | Build command | Deploy command |
-| --- | --- | --- |
+| Worker                    | Build command      | Deploy command               |
+| ------------------------- | ------------------ | ---------------------------- |
 | `zone-switch-maintenance` | `npm run build:ci` | `npm run deploy:maintenance` |
-| `zone-switch-billing` | `npm run build:ci` | `npm run deploy:billing` |
-| `zone-switch` | `npm run build:ci` | `npm run deploy:ci` |
+| `zone-switch-billing`     | `npm run build:ci` | `npm run deploy:billing`     |
+| `zone-switch`             | `npm run build:ci` | `npm run deploy:ci`          |
 
 三套连接使用同一个 Fork、同一个 `release` 分支，各自命令部署自己的配置。欠费和维护 Worker 必须显式指定各自部署命令，默认 `npx wrangler deploy` 只读取后台的 `wrangler.jsonc`。Node.js 版本使用 `.node-version` 的 24；如覆盖 `NODE_VERSION`，也设为 24。关闭非生产分支自动构建或预览，只让选定生产分支发布。
 
@@ -137,7 +139,7 @@ npm run password
 
 在 **Settings → Build → Branch control** 关闭 **Enable Preview Builds**，避免非生产分支和 PR 触发预览部署。生产分支保留 `release`。
 
-在构建配置中选择 Cloudflare 的部署 API Token。后台的 `CF_API_TOKEN` 和 `ADMIN_PASSWORD_HASH` 仍填 **Variables & Secrets**，不是 Build variables：构建变量与运行时变量分开。两个静态 Worker 不需要后台凭据。
+在构建配置中选择 Cloudflare 的部署 API Token。后台的 `CF_API_TOKEN` 和 `ADMIN_PASSWORD_HASH` 仍填 **Variables & Secrets**，不是 Build variables：构建变量与运行时变量分开。两个提示 Worker 不需要后台凭据。
 
 ### 首次部署与更新
 
@@ -168,11 +170,11 @@ scripts/static-notices.mjs
 
 然后分别追加：
 
-| Worker | 额外 Include paths |
-| --- | --- |
-| 后台 | `wrangler.jsonc`、`src/*`、`shared/*`、`ui/admin/*`、`public/*`、`index.html` |
-| 维护页 | `wrangler.maintenance.jsonc` |
-| 欠费页 | `wrangler.billing.jsonc` |
+| Worker | 额外 Include paths                                                         |
+| ------ | ------------------------------------------------------------------------ |
+| 后台     | `wrangler.jsonc`、`src/*`、`shared/*`、`ui/admin/*`、`public/*`、`index.html` |
+| 维护页    | `wrangler.maintenance.jsonc`                    |
+| 欠费页    | `wrangler.billing.jsonc`                            |
 
 这样后台页面或管理接口修改只触发后台；欠费配置只触发欠费 Worker。共享模板、三语言文案、访客控件或依赖修改可能同时触发多套，这是它们真实共用的代码。构建命令会验证和生成全部产物，但部署命令只上传自己的 Worker。只改文档不触发 Workers Builds；首次连接、手动重试及平台特殊推送规则可能仍构建。
 
@@ -184,31 +186,32 @@ scripts/static-notices.mjs
 
 **Repository secrets**：
 
-| 名称 | 内容 |
-| --- | --- |
+| 名称                      | 内容                           |
+| ----------------------- | ---------------------------- |
 | `CLOUDFLARE_ACCOUNT_ID` | 与后台 `CF_ACCOUNT_ID` 相同的账号 ID |
-| `CLOUDFLARE_API_TOKEN` | 部署用 Cloudflare API Token |
+| `CLOUDFLARE_API_TOKEN`  | 部署用 Cloudflare API Token     |
 
 部署 Token 可从 Cloudflare **Edit Cloudflare Workers** 模板创建，限制在自己的目标账号和相关域。它需要部署三个 Worker，不能使用只允许读取脚本的后台管理 Token。具体权限以官方模板和实际使用的资源为准，不将 Token 写进工作流或配置文件。
 
 在 **Secrets** 标签点击 **New repository secret**，分别新增上表两个名称。下图以 `CLOUDFLARE_API_TOKEN` 为例，**Secret** 填自己生成的部署 Token，再点击 **Add secret**；`CLOUDFLARE_ACCOUNT_ID` 单独新增一条。截图没有填写任何密钥值。
 
-![GitHub 新建 Repository secret，名称示例为 CLOUDFLARE_API_TOKEN，Secret 留空](screenshots/deployment/github-new-secret.jpg)
+![GitHub 新建 Repository secret，名称示例为 CLOUDFLARE\_API\_TOKEN，Secret 留空](screenshots/deployment/github-new-secret.jpg)
 
 **Repository variables**：
 
-| 名称 | 是否必填 | 内容 |
-| --- | --- | --- |
-| `AUTO_DEPLOY` | 是 | `true` 启用自动部署；删除或改为 `false` 后仅检查 |
-| `WORKER_NAME` | 否 | 自定义后台 Worker 名称，默认 `zone-switch` |
-| `MAINTENANCE_WORKER_NAME` | 否 | 默认是后台名称加 `-maintenance` |
-| `BILLING_WORKER_NAME` | 否 | 默认是后台名称加 `-billing` |
+| 名称                        | 是否必填 | 内容                               |
+| ------------------------- | ---- | -------------------------------- |
+| `AUTO_DEPLOY`             | 是    | `true` 启用自动部署；删除或改为 `false` 后仅检查 |
+| `WORKER_NAME`             | 否    | 自定义后台 Worker 名称，默认 `zone-switch` |
+| `MAINTENANCE_WORKER_NAME` | 否    | 默认是后台名称加 `-maintenance`          |
+| `BILLING_WORKER_NAME`     | 否    | 默认是后台名称加 `-billing`              |
 
 切换到 **Variables** 标签，点击 **New repository variable**，将 **Name** 设为 `AUTO_DEPLOY`、**Value** 设为小写 `true`，然后点击 **Add variable**。下图为保存前的示例；选择 Workers Builds 时不要启用此变量。
 
-![GitHub 新建 Repository variable，AUTO_DEPLOY 的示例值为 true](screenshots/deployment/github-auto-deploy-variable.jpg)
+![GitHub 新建 Repository variable，AUTO\_DEPLOY 的示例值为 true](screenshots/deployment/github-auto-deploy-variable.jpg)
 
 三个名称必须不同，并与 Cloudflare 后台运行时变量及已有 Worker 名称一致。设置 GitHub Variables 只改变部署目标，不自动修改后台运行时变量。使用默认名称无需填写这三个可选变量；改名应同时改两处，不随意重命名已有 DO 后台。
+
 
 如果自定义名称不希望公开，改填同名 Repository secrets；工作流优先读取 Secrets，再读取 Variables。自动部署使用 GitHub 自动提供的 `GITHUB_TOKEN` 保存每个 Worker 的成功部署摘要，只有部署 job 拥有 `deployments: write` 权限；不需要额外添加 GitHub PAT。部署记录仅保存内容摘要和提交版本，不保存 Cloudflare 凭据、域名、账号或密码；自定义 Worker 名称可能出现在部署记录与日志中，Secrets 不会让实际公开访问的服务名称变为私密。
 
@@ -232,14 +235,14 @@ scripts/static-notices.mjs
 
 工作流文件为 [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)，部署脚本为 [`scripts/deploy.mjs`](../scripts/deploy.mjs)。之后每次推送或合并到自己的 `release` 会自动检查三套；启用 `AUTO_DEPLOY=true` 时仅部署内容变化的 Worker。PR 不触发工作流。部署密钥只注入部署步骤。
 
-| 修改范围 | 自动部署结果 |
-| --- | --- |
-| 后台页面或管理接口 | 后台；两个静态产物不变时跳过 |
-| `wrangler.billing.jsonc` | 欠费 Worker |
-| `wrangler.maintenance.jsonc` | 维护 Worker |
-| `wrangler.jsonc` | 后台 |
-| 共享提示模板、翻译、访客控件 | 更新内容受影响的 Worker，可能包括三套 |
-| README、部署文档 | 检查仍执行，部署内容不变则全部跳过 |
+| 修改范围                         | 自动部署结果                 |
+| ---------------------------- | ---------------------- |
+| 后台页面或管理接口                    | 后台；两个静态产物不变时跳过         |
+| `wrangler.billing.jsonc`     | 欠费 Worker              |
+| `wrangler.maintenance.jsonc` | 维护 Worker              |
+| `wrangler.jsonc`             | 后台                     |
+| 共享提示模板、翻译、访客控件               | 更新内容受影响的 Worker，可能包括三套 |
+| README、部署文档                  | 检查仍执行，部署内容不变则全部跳过      |
 
 静态 Worker 比较各自最终静态产物、公共配置、依赖锁文件和 Node 版本；后台还比较 `tsconfig.json`、`src/`、`shared/` 的动态源码。当前两类提示共用模板、图标、三语言文案与访客控件，修改共同文件可能同时影响维护页、欠费页和后台预览，不能保证这类改动只更新一个 Worker。
 
@@ -296,35 +299,35 @@ scripts/static-notices.mjs
 
 ## 修改账号、密码及 Token
 
-| 场景 | 操作 | 生效范围 |
-| --- | --- | --- |
-| 修改线上密码 | 本地 `npm run password` 生成新哈希，在 Cloudflare 更新 `ADMIN_PASSWORD_HASH` 并部署 | 线上后台，旧会话失效 |
-| 修改线上账号 | 在 Cloudflare 更新 `ADMIN_USERNAME` 并部署 | 线上后台，旧会话失效 |
-| 更换管理 Token | 在 Cloudflare 更新 Secret `CF_API_TOKEN` 并部署 | 域名同步和路由操作 |
-| 更换部署 Token | Workers Builds 更新构建 API Token，或 GitHub Actions 更新 `CLOUDFLARE_API_TOKEN` Secret | 对应平台的后续部署 |
+| 场景         | 操作                                                                              | 生效范围       |
+| ---------- | ------------------------------------------------------------------------------- | ---------- |
+| 修改线上密码     | 本地 `npm run password` 生成新哈希，在 Cloudflare 更新 `ADMIN_PASSWORD_HASH` 并部署           | 线上后台，旧会话失效 |
+| 修改线上账号     | 在 Cloudflare 更新 `ADMIN_USERNAME` 并部署                                            | 线上后台，旧会话失效 |
+| 更换管理 Token | 在 Cloudflare 更新 Secret `CF_API_TOKEN` 并部署                                       | 域名同步和路由操作  |
+| 更换部署 Token | Workers Builds 更新构建 API Token，或 GitHub Actions 更新 `CLOUDFLARE_API_TOKEN` Secret | 对应平台的后续部署  |
 
 线上账号或密码修改后重新登录。默认模板的 `admin` 是示例账号，密码取决于自己生成的哈希；生产不要使用演示密码。
 
 ## 故障排查
 
-| 现象 | 检查与处理 |
-| --- | --- |
-| Actions 没有部署任务 | 启用 Fork 的工作流；确认 `AUTO_DEPLOY` 为小写 `true`、分支为 `release`；`main` 推送与 PR 不触发，手动选择其他分支时全部跳过 |
-| Workers Builds 没有触发 | 检查 GitHub 集成授权、连接的 Fork 和生产分支；确认新提交命中 Build watch paths |
-| Workers Builds 部署错目标或提示名称不一致 | 检查 Deploy command 是否指定对应配置和名称，默认配置只对应后台 |
-| Actions 内容未变化但需要重新部署 | Run workflow 选择指定 target 或 all；手动修改线上内容不会自动更新 GitHub 摘要 |
-| Actions 保存部署记录出现 403 | 确认仓库或组织允许工作流的 deployments: write；不把权限错误当作部署成功 |
-| 后台参数未配置或管理 Token 不可用 | 在正确的后台 Worker 完整配置第 3 节的参数与 Secrets，保存部署后再验收 |
-| 部署出现 401 / 403 | 检查 GitHub 部署 Token、有效期、授权账号和 Account ID，不能使用只读的管理 Token |
-| 后台访问 404 | 核对 HTTPS、Custom Domain 与 `CONTROL_HOST` 一致、域名绑定到后台 Worker；不用业务域或 workers.dev 访问后台 |
-| 登录失败 | 核对线上账号、密码哈希完整且不是明文、配置已部署；过多失败需等待限流窗口 |
-| 登录正常但同步 403 | 检查后台 `CF_API_TOKEN` 的四类权限、授权 Zone 与账号；不是 GitHub 部署 Token |
-| 同步为空或部分失败 | 核对账号 ID、Token 范围和列表中的失败原因；单域失败保留快照，不代表完整同步成功 |
-| 路由冲突 | 人工检查其他 Worker Routes 或绕过规则，系统不会覆盖不属于自己的路由 |
-| 未开启代理 | DNS 入口未开启橙云，按业务需求开启代理后重新同步 |
-| 开启后仍显示原页面 | 核对真实业务域 Route 的目标 Worker，等待传播，排除浏览器及 Service Worker 缓存 |
-| 静态提示无样式或按钮 | 部署完整 `dist/static-*` 目录，而不是只有 `index.html` |
-| 恢复失败或路由被外部修改 | 保留 DO 归属记录，核查真实路由与错误原因，处理后同步并重试 |
+| 现象                           | 检查与处理                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------- |
+| Actions 没有部署任务               | 启用 Fork 的工作流；确认 `AUTO_DEPLOY` 为小写 `true`、分支为 `release`；`main` 推送与 PR 不触发，手动选择其他分支时全部跳过 |
+| Workers Builds 没有触发          | 检查 GitHub 集成授权、连接的 Fork 和生产分支；确认新提交命中 Build watch paths                                |
+| Workers Builds 部署错目标或提示名称不一致 | 检查 Deploy command 是否指定对应配置和名称，默认配置只对应后台                                                |
+| Actions 内容未变化但需要重新部署         | Run workflow 选择指定 target 或 all；手动修改线上内容不会自动更新 GitHub 摘要                                |
+| Actions 保存部署记录出现 403         | 确认仓库或组织允许工作流的 deployments: write；不把权限错误当作部署成功                                          |
+| 后台参数未配置或管理 Token 不可用         | 在正确的后台 Worker 完整配置第 3 节的参数与 Secrets，保存部署后再验收                                           |
+| 部署出现 401 / 403               | 检查 GitHub 部署 Token、有效期、授权账号和 Account ID，不能使用只读的管理 Token                                |
+| 后台访问 404                     | 核对 HTTPS、Custom Domain 与 `CONTROL_HOST` 一致、域名绑定到后台 Worker；不用业务域或 workers.dev 访问后台      |
+| 登录失败                         | 核对线上账号、密码哈希完整且不是明文、配置已部署；过多失败需等待限流窗口                                                   |
+| 登录正常但同步 403                  | 检查后台 `CF_API_TOKEN` 的四类权限、授权 Zone 与账号；不是 GitHub 部署 Token                               |
+| 同步为空或部分失败                    | 核对账号 ID、Token 范围和列表中的失败原因；单域失败保留快照，不代表完整同步成功                                           |
+| 路由冲突                         | 人工检查其他 Worker Routes 或绕过规则，系统不会覆盖不属于自己的路由                                              |
+| 未开启代理                        | DNS 入口未开启橙云，按业务需求开启代理后重新同步                                                             |
+| 开启后仍显示原页面                    | 核对真实业务域 Route 的目标 Worker，等待传播，排除浏览器及 Service Worker 缓存                                 |
+| 静态提示无样式或按钮                   | 部署完整 `dist/static-*` 目录，而不是只有 `index.html`                                             |
+| 恢复失败或路由被外部修改                 | 保留 DO 归属记录，核查真实路由与错误原因，处理后同步并重试                                                        |
 
 清理本地文件时保留 `.dev.vars`、`.wrangler/state/` 和正在使用的三套 `dist` 产物。发布前需检查秘密是否已被 Git 跟踪；`.gitignore` 不会移除已跟踪的文件，也不能代替撤销已泄露的 Token。
 
@@ -335,7 +338,7 @@ scripts/static-notices.mjs
 - [Cloudflare：GitHub Actions 部署及部署 Token](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/)
 - [Cloudflare：Workers Builds 配置](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
 - [Cloudflare：Secrets 配置与生效](https://developers.cloudflare.com/workers/configuration/secrets/)
-- [Cloudflare：Wrangler 配置及 keep_vars](https://developers.cloudflare.com/workers/wrangler/configuration/)
+- [Cloudflare：Wrangler 配置及 keep\_vars](https://developers.cloudflare.com/workers/wrangler/configuration/)
 - [GitHub：配置 Actions Secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets)
 - [GitHub：Fork 仓库](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)
 - [GitHub：同步 Fork](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/syncing-a-fork)

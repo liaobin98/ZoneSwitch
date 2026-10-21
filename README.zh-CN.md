@@ -1,24 +1,24 @@
-<p align="center">
-  <img src="docs/brand/logo.svg" alt="ZoneSwitch Logo" width="72" height="72" />
+<p align="center">  
+  <img src="docs/brand/logo.svg" alt="ZoneSwitch Logo" width="72" height="72" />  
 </p>
 
 <h1 align="center">ZoneSwitch</h1>
 
-<p align="center">
-  <a href="README.md">English</a> ｜ 简体中文
+<p align="center">  
+  <a href="README.md">English</a> ｜ 简体中文  
 </p>
 
-<p align="center">
-  <img src="docs/badges/cloudflare.svg" alt="Cloudflare Workers" align="middle" />
-  <img src="docs/badges/node.svg" alt="Node.js 24" align="middle" />
-  <a href="LICENSE"><img src="docs/badges/license.svg" alt="MIT 许可证" align="middle" /></a>
+<p align="center">  
+  <img src="docs/badges/cloudflare.svg" alt="Cloudflare Workers" align="middle" />  
+  <img src="docs/badges/node.svg" alt="Node.js 24" align="middle" />  
+  <a href="LICENSE"><img src="docs/badges/license.svg" alt="MIT 许可证" align="middle" /></a>  
 </p>
 
-<p align="center">
-  <a href="docs/deployment.md">部署文档</a> ｜
-  <a href="#快速开始">快速开始</a> ｜
-  <a href="#使用方式">使用方式</a> ｜
-  <a href="#常见问题">常见问题</a>
+<p align="center">  
+  <a href="docs/deployment.md">部署文档</a> ｜  
+  <a href="#快速开始">快速开始</a> ｜  
+  <a href="#使用方式">使用方式</a> ｜  
+  <a href="#常见问题">常见问题</a>  
 </p>
 
 **ZoneSwitch** 是一个开源的 Cloudflare 域名服务状态控制台，支持在**正常服务、维护中、已欠费**之间切换。无论是 Worker 自定义域名，还是通过 Cloudflare 代理的服务器网站，都可以在同一个后台中管理，单独或批量展示提示页，并在需要时恢复原网站。
@@ -53,23 +53,23 @@ npm run dev
 
 打开 [本地控制台](http://127.0.0.1:8787)，使用以下演示账号登录：
 
-| 账号 | 密码 |
-| --- | --- |
+| 账号      | 密码                     |
+| ------- | ---------------------- |
 | `admin` | `ZoneSwitch-demo-2026` |
 
 登录页和后台账号旁的语言按钮可切换简体中文 / English，浏览器会记住选择。
 
-> [!NOTE]
+> [!NOTE]  
 > 演示模式使用示例域名和模拟路由，不调用 Cloudflare API。`npm run demo` 只在 `.dev.vars` 不存在时生成配置；已有配置时请另用一份项目副本体验。
 
 ### 部署到 Cloudflare
 
 正式使用需要自己的 Cloudflare 账号、域名、管理 API Token 和后台账号。将项目 Fork 到自己的 GitHub 仓库，再选择一种自动部署方式：
 
-| 方式 | 适用场景 | 配置说明 |
-| --- | --- | --- |
+| 方式                        | 适用场景                             | 配置说明                                                                            |
+| ------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
 | Cloudflare Workers Builds | 在 Cloudflare 中连接仓库，分别构建三个 Worker | [Workers Builds 部署](docs/deployment.md#4a-在-cloudflare-连接-githubworkers-builds) |
-| GitHub Actions | 在 Fork 中统一检查，按顺序部署内容变化的 Worker | [GitHub Actions 部署](docs/deployment.md#4b-在自己的-fork-配置-github-actions) |
+| GitHub Actions            | 在 Fork 中统一检查，按顺序部署内容变化的 Worker   | [GitHub Actions 部署](docs/deployment.md#4b-在自己的-fork-配置-github-actions)          |
 
 `main` 用于日常开发和本地检查；GitHub Actions 的检查、构建与部署仅在 `release` 运行，`main` 推送和 PR 不触发工作流。Fork 时保留 `release` 分支；Workers Builds 的生产分支和 GitHub Actions 手动运行分支均选择 `release`。验收后的版本再合入发布分支。
 
@@ -83,13 +83,13 @@ npm run dev
 
 ## 支持的服务入口
 
-| 入口 | 查看 | 切换状态 |
-| --- | --- | --- |
-| Worker 自定义域名 | 支持 | 支持 |
-| 已开启 Cloudflare 代理的 A / AAAA / CNAME 记录 | 支持 | 支持 |
-| 未开启 Cloudflare 代理的 A / AAAA / CNAME 记录 | 支持 | 不支持 |
+| 入口                                     | 查看 | 切换状态 |
+| -------------------------------------- | -- | ---- |
+| Worker 自定义域名                           | 支持 | 支持   |
+| 已开启 Cloudflare 代理的 A / AAAA / CNAME 记录 | 支持 | 支持   |
+| 未开启 Cloudflare 代理的 A / AAAA / CNAME 记录 | 支持 | 不支持  |
 
-访客提示页按地区选择语言：TW / HK / MO 使用繁体中文，JP 使用日文，其他地区或地区识别失败时使用英文。访客也可手动切换三种语言。
+访客提示页在首次绘制前按浏览器语言选择繁体中文（zh-Hant / zh-TW / zh-HK / zh-MO）、日文或英文，不支持的语言回退英文。保持纯静态服务，不请求地区定位、不执行动态 Worker；访客仍可手动切换三种语言。
 
 ## 使用方式
 
@@ -150,7 +150,7 @@ npm run dev
 
 使用真实账号开发时，将 `.dev.vars.example` 复制为 `.dev.vars`，填写自己的参数，设置 `CONTROL_HOST="127.0.0.1"`，不设置 `DEMO_MODE`。**此模式会修改真实 Cloudflare 路由**，配置步骤见[部署文档](docs/deployment.md)。
 
-主开发服务完成静态资源构建后，可在两个独立终端分别运行 `npm run dev:maintenance` 和 `npm run dev:billing`，访问 [维护页](http://127.0.0.1:8790) 和 [欠费页](http://127.0.0.1:8791)。本地提示页初始显示英文，可手动切换。
+主开发服务完成静态资源构建后，可在两个独立终端分别运行 `npm run dev:maintenance` 和 `npm run dev:billing`，访问 [维护页](http://127.0.0.1:8790) 和 [欠费页](http://127.0.0.1:8791)。本地提示页按浏览器语言显示，不支持的语言回退英文，可手动切换。
 
 Windows 用户可运行 `change-admin-password.bat` 修改本地 `.dev.vars` 中的密码：输入两次相同的 8～32 位密码，再重启开发服务。线上密码在 Cloudflare 中另行配置。
 
