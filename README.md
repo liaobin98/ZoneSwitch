@@ -11,7 +11,6 @@
 <p align="center">
   <img src="docs/badges/cloudflare.svg" alt="Cloudflare Workers" align="middle" />
   <img src="docs/badges/node.svg" alt="Node.js 24" align="middle" />
-  <a href="LICENSE"><img src="docs/badges/license.svg" alt="MIT License" align="middle" /></a>
 </p>
 
 <p align="center">
@@ -21,7 +20,7 @@
   <a href="#faq">FAQ</a>
 </p>
 
-**ZoneSwitch** is an open-source console for switching Cloudflare domains between **Online, Maintenance, and Overdue**. Manage Workers Custom Domains and server websites behind Cloudflare's proxy in one place, show notices for individual domains or batches, and restore the original website when ready.
+**ZoneSwitch** is a console for switching Cloudflare domains between **Online, Maintenance, and Overdue**. Manage Workers Custom Domains and server websites behind Cloudflare's proxy in one place, show notices for individual domains or batches, and restore the original website when ready.
 
 Use it for planned maintenance, pausing hosted services, and managing multiple domains. The console switches entry points through temporary Worker Routes while preserving existing DNS and Custom Domain configuration, without changes to business code.
 
@@ -176,8 +175,8 @@ tests/               Core regression tests
 docs/                Deployment guides and interface screenshots
 ```
 
-## License
+## Updates and releases
 
 See the [changelog (Chinese)](CHANGELOG.md) for version history and the [release checklist (Chinese)](docs/releasing.md) for verification and acceptance steps.
 
-ZoneSwitch is open source under the [MIT License](LICENSE).
+The release checklist also covers configuration, history, and screenshot checks before making the repository public. Deploy with your own account and credentials, and keep personal configuration out of Git.

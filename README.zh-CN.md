@@ -11,7 +11,6 @@
 <p align="center">  
   <img src="docs/badges/cloudflare.svg" alt="Cloudflare Workers" align="middle" />  
   <img src="docs/badges/node.svg" alt="Node.js 24" align="middle" />  
-  <a href="LICENSE"><img src="docs/badges/license.svg" alt="MIT 许可证" align="middle" /></a>  
 </p>
 
 <p align="center">  
@@ -21,7 +20,7 @@
   <a href="#常见问题">常见问题</a>  
 </p>
 
-**ZoneSwitch** 是一个开源的 Cloudflare 域名服务状态控制台，支持在**正常服务、维护中、已欠费**之间切换。无论是 Worker 自定义域名，还是通过 Cloudflare 代理的服务器网站，都可以在同一个后台中管理，单独或批量展示提示页，并在需要时恢复原网站。
+**ZoneSwitch** 是一个 Cloudflare 域名服务状态控制台，支持在**正常服务、维护中、已欠费**之间切换。无论是 Worker 自定义域名，还是通过 Cloudflare 代理的服务器网站，都可以在同一个后台中管理，单独或批量展示提示页，并在需要时恢复原网站。
 
 适用于计划维护、暂停托管服务和多域名统一管理。后台通过临时 Worker Route 切换访问入口，保留原有 DNS 与 Custom Domain 配置，无需修改业务代码。
 
@@ -176,8 +175,8 @@ tests/               核心回归测试
 docs/                部署指南与界面截图
 ```
 
-## 许可证
+## 更新与发布
 
 版本变化见[更新记录](CHANGELOG.md)，发布前检查和验收步骤见[发布检查清单](docs/releasing.md)。
 
-ZoneSwitch 基于 [MIT 许可证](LICENSE) 开源。
+公开仓库前的配置、历史与截图检查也见发布检查清单。部署时使用自己的账号与凭据，勿将个人配置提交到仓库。
