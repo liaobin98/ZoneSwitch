@@ -94,9 +94,9 @@ Visitor notices choose a supported browser language before the first paint: Trad
 
 1. Sign in and click **Sync domains** to load service entry points.
 2. Choose a zone or filter by domain / Worker name, service type, or state.
-3. Use **Start maintenance**, **Mark overdue**, or **End maintenance** on a domain, or select domains for a batch operation.
-4. Review every target in the confirmation dialog. Selections can include entries outside the current filter.
-5. Check the results and **Activity log**. Sync again for results marked **Needs verification**.
+3. Use **Start maintenance**, **Mark overdue**, or **End maintenance** on a domain, or select domains for a batch operation. The action for a confirmed current state is disabled. Batch operations skip domains already in the target state; entries marked **Needs verification** retain available verification and restore actions.
+4. Review the actual targets in the confirmation dialog. Selections can include entries outside the current filter.
+5. After confirmation, an individual operation closes the dialog immediately and reports results in the notification at the top. Batch operations keep the progress dialog open, then close it automatically when every target succeeds and the list is updated. Failures, uncertain results, request errors, or a failed list update keep it open for review. The batch entry point shows progress even for a single selected domain. Use the **Activity log** as needed and sync to confirm the actual state.
 6. After a production change, check the business domain's home page and a deeper path.
 
 **End maintenance** restores either maintenance or overdue mode. When restoring a specific hostname under a wildcard maintenance route managed by ZoneSwitch, it creates an exact route with no Worker script as an exception.
@@ -113,7 +113,7 @@ All three screenshots on this page come from the application's local demo mode. 
 
 ![English overdue notice](docs/screenshots/billing-en.jpg)
 
-You can also use the console's **Preview** links to inspect each notice and choose a language.
+You can also use the console's **Preview** links to inspect each notice and choose a language. **By visitor region** in the preview selects text from the administrator's current request region: Traditional Chinese in Taiwan, Hong Kong, and Macao, Japanese in Japan, and English elsewhere. This is a text preview, separate from the real visitor pages, which select a browser language before the first paint. Refreshing a real visitor page resets any manual selection to the browser language.
 
 ## FAQ
 

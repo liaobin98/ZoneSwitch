@@ -135,10 +135,24 @@ The console uses React, Tailwind CSS, Radix UI, and Lucide. The management API r
 | Admin console            | Simplified Chinese and English, manually selectable and remembered in the browser      |
 | Visitor notices          | Supported browser language: Traditional Chinese, Japanese, or English               |
 | Manual visitor selection | Visitors can choose any of the three languages; refreshing uses the browser language again |
-| Preview                  | Choose a language in the console before opening a notice                               |
+| Preview                  | Choose a language, or use the administrator request's region; separate from real visitor language selection |
 
 
 A fixed inline script in the HTML head selects a supported browser language before the first paint. Traditional Chinese (for all Chinese browser languages, including zh-CN / zh-Hans), Japanese, and English are supported; unsupported preferences fall back to English. No IP-region lookup or `/cdn-cgi/trace` request is made. All localized text and buttons are present in the static HTML. The external controls script only handles manual switching. The build generates CSP hashes for the inline scripts without enabling `script-src unsafe-inline`. Keep both notice Workers static, without a `main` entry point, asset binding, or `run_worker_first=true`; serving the notices does not invoke a dynamic Worker.
+
+The first supported entry in the browser's language preference order wins: `en-US, zh-CN` selects English, while `zh-CN, en-US` selects Traditional Chinese. The browser interface language may differ from its preferred website language. Manual selection is not stored; refreshing selects the browser language again.
+
+The admin preview is separate. It can use an explicit language or, with **By visitor region**, the region of the administrator's request: Traditional Chinese in Taiwan, Hong Kong, and Macao, Japanese in Japan, and English elsewhere. Local previews without region metadata fall back to English. This preview is served by the admin API; it does not add region lookups or dynamic execution to the static visitor pages.
+
+## Verify the operation flow
+
+After deployment, test on a noncritical business domain with authorization to change its routes:
+
+1. Sign in over HTTPS, sync domains, and check that authorized Worker and proxied server entries appear.
+2. Switch between maintenance, overdue, and online. Check the temporary Route target, preserve the original DNS and Custom Domain, and verify both the home page and a deep path. Notices return HTTP 200 HTML. Overdue mode is set manually.
+3. Check that the action for the confirmed current state is disabled. Batch operations skip domains already in the target state; entries marked **Needs verification** retain available verification and restore actions.
+4. Confirm that individual operations close the confirmation dialog immediately and report results at the top. Batch operations show progress, then close automatically only after all targets succeed and the list is updated. Failures, uncertain results, request errors, or a failed list update keep the dialog open. The batch entry point uses this flow even with one selected domain.
+5. Review activity entries and sync to confirm uncertain results. Verify browser language preference order, all three manual language choices, and language selection after refreshing. Admin previews do not replace real visitor page checks.
 
 ## Operational notes
 
@@ -150,6 +164,7 @@ A fixed inline script in the HTML head selects a supported browser language befo
 - **Needs verification means the outcome is still unknown.** Sync to confirm it. Historical logs retain the result known at the time of the operation.
 - **Conflicting or externally modified routes are left for review.** Unproxied DNS entries can be listed but cannot be switched to a notice.
 - **Keep secrets out of the repository.** Personal runtime configuration belongs in local ignored files or Cloudflare; deployment credentials belong in the deployment platform.
+- **Review existing records before making a private repository public.** Check Git history, Actions logs and artifacts, Release assets, and screenshots as well as current files. Ignore rules do not remove previously recorded data. See the [publication checklist (Chinese)](releasing.md#公开仓库前检查).
 - **Keep existing Worker and Durable Object identities stable.** Do not remove a visitor Worker while its notice routes are in use. When upgrading an older version, review business routes that still point to the admin Worker; only stored exact-host legacy routes can be migrated automatically.
 
 [English](deployment.en.md) | [简体中文](deployment.md) · [Back to README](../README.md)
