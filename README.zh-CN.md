@@ -65,10 +65,12 @@ npm run dev
 
 正式使用需要自己的 Cloudflare 账号、域名、管理 API Token 和后台账号。将项目 Fork 到自己的 GitHub 仓库，再选择一种自动部署方式：
 
+部署文档提供两种操作入口：[一句话交给 AI 部署](docs/deployment.md#方式一一句话交给-ai-部署)，或按[手工详细步骤](docs/deployment.md#方式二手工详细部署步骤)自行配置。
+
 | 方式                        | 适用场景                             | 配置说明                                                                            |
 | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
-| Cloudflare Workers Builds | 在 Cloudflare 中连接仓库，分别构建三个 Worker | [Workers Builds 部署](docs/deployment.md#4a-在-cloudflare-连接-githubworkers-builds) |
-| GitHub Actions            | 在 Fork 中统一检查，按顺序部署内容变化的 Worker   | [GitHub Actions 部署](docs/deployment.md#4b-在自己的-fork-配置-github-actions)          |
+| Cloudflare Workers Builds | 在 Cloudflare 中连接仓库，分别构建三个 Worker | [Workers Builds 部署](docs/deployment.md#b-cloudflare-workers-builds) |
+| GitHub Actions            | 在 Fork 中统一检查，按顺序部署内容变化的 Worker   | [GitHub Actions 部署](docs/deployment.md#a-github-actions)          |
 
 `main` 用于日常开发和本地检查；GitHub Actions 的检查、构建与部署仅在 `release` 运行，`main` 推送和 PR 不触发工作流。Fork 时保留 `release` 分支；Workers Builds 的生产分支和 GitHub Actions 手动运行分支均选择 `release`。验收后的版本再合入发布分支。
 
